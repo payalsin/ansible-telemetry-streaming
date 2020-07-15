@@ -12,9 +12,11 @@ Download the following roles from ansible galaxy
 - ansible-galaxy install f5devcentral.atc_deploy --force
 - got clone this repo (git clone https://github.com/payalsin/ansible-telemetry-streaming.git)
 - Change your vars.yml file to reflect your environment
+  - If avr is required set the avr_needed paramter to "yes", if not needed change it to "no"
 - Run the playbook
   - ansible-playbook ts_workflow.yml
   
-## Assumptions
+## Pre-requisites
 - BIG-IP 14.1+ version is being used
-- The TS delaration is for Azure log analytics (modify it to use your own consumer)
+- If AVR is required to be configured make sure there is enough memory for the module to be enabled along with all the other BIG-IP modules that are provisioned in your environment
+- The TS delaration is for Azure log analytics (modify it to use your own consumer), chnage your TS json file with the correct workspace ID and sharedkey
