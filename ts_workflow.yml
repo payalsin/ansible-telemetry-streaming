@@ -1,0 +1,121 @@
+- name: Telemetry streaming setup
+  hosts: localhost
+  connection: local
+  any_errors_fatal: true
+
+  vars_files:
+   vars.yml
+
+  tasks:
+
+  - name: Get latest AS3 RPM name
+    action: shell wget -O - {{as3_uri}} | grep -E rpm | head -1 | cut -d "/" -f 7 | cut -d "=" -f 1 |  cut -d "\"" -f 1
+    register: as3_output
+
+  - debug:
+     var: as3_output.stdout_lines[0]
+
+  - set_fact:
+     as3_release: "{{as3_output.stdout_lines[0]}}"
+
+  - name: Get latest AS3 RPM tag
+    action: shell wget -O - {{as3_uri}} | grep -E rpm | head -1 | cut -d "/" -f 6
+    register: as3_output
+
+  - debug:
+     var: as3_output.stdout_lines[0]
+
+  - set_fact:
+     as3_release_tag: "{{as3_output.stdout_lines[0]}}"
+
+  - name: Get latest TS RPM name
+    action: shell wget -O - {{ts_uri}} | grep -E rpm | head -1 | cut -d "/" -f 7 | cut -d "=" -f 1 |  cut -d "\"" -f 1
+    register: ts_output
+
+  - debug:
+     var: ts_output.stdout_lines[0]
+
+  - set_fact:
+     ts_release: "{{ts_output.stdout_lines[0]}}"
+
+  - name: Get latest TS RPM tag
+    action: shell wget -O - {{ts_uri}} | grep -E rpm | head -1 | cut -d "/" -f 6
+    register: ts_output
+
+  - debug:
+     var: ts_output.stdout_lines[0]
+
+  - set_fact:
+     ts_release_tag: "{{ts_output.stdout_lines[0]}}"
+
+  - name: Download and Install AS3 and TS RPM  ackages to BIG-IP using role
+    include_role:
+      name: f5devcentral.f5app_services_package
+    vars:
+      f5app_services_package_url: "{{item.uri}}/download/{{item.release_tag}}/{{item.release}}?raw=true"
+      f5app_services_package_path: "/tmp/{{item.release}}"
+    with_items:
+    - {uri: "{{as3_uri}}", release_tag: "{{as3_release_tag}}", release: "{{as3_release}}"}
+    - {uri: "{{ts_uri}}", release_tag: "{{ts_release_tag}}", release: "{{ts_release}}"}
+
+  - name: Deploy AS3 and TS declaration on the BIG-IP using role
+    include_role:
+      name: f5devcentral.atc_deploy
+    vars:
+      atc_method: POST
+      atc_declaration: "{{ lookup('template', item.file) }}"
+      atc_delay: 10
+      atc_retries: 15
+      atc_service: "{{item.service}}"
+      provider:
+       server: "{{ f5app_services_package_server }}"
+       server_port: "{{ f5app_services_package_server_port }}"
+       user: "{{ f5app_services_package_user }}"
+       password: "{{ f5app_services_package_password }}"
+       validate_certs: "{{ f5app_services_package_validate_certs | default(no) }}"
+       transport: "{{ f5app_services_package_transport }}"
+    with_items:
+    - {service: "AS3", file: "as3_ts_setup_declaration.json"}
+    - {service: "Telemetry", file: "ts_poller_and_listener_setup_declaration.json"}
+
+  #If AVR logs need to be enabled
+  - name: Provision BIG-IP with AVR
+    bigip_provision:
+     provider:
+       server: "{{ f5app_services_package_server }}"
+       server_port: "{{ f5app_services_package_server_port }}"
+       user: "{{ f5app_services_package_user }}"
+       password: "{{ f5app_services_package_password }}"
+       validate_certs: "{{ f5app_services_package_validate_certs | default(no) }}"
+       transport: "{{ f5app_services_package_transport }}"
+     module: "avr"
+     level: "nominal" 
+  
+  - name: Enable AVR logs using tmsh commands
+    bigip_command:
+     commands:
+      - modify analytics global-settings { offbox-protocol tcp offbox-tcp-addresses add { 127.0.0.1 } offbox-tcp-port 6514 use-offbox enabled }
+      - create ltm profile analytics telemetry-http-analytics { collect-geo enabled collect-http-timing-metrics enabled collect-ip enabled collect-max-tps-and-throughput enabled collect-methods enabled collect-page-load-time enabled collect-response-codes enabled collect-subnets enabled collect-url enabled collect-user-agent enabled collect-user-sessions enabled publish-irule-statistics enabled }
+      - create ltm profile tcp-analytics telemetry-tcp-analytics { collect-city enabled collect-continent enabled collect-country enabled collect-nexthop enabled collect-post-code enabled collect-region enabled collect-remote-host-ip enabled collect-remote-host-subnet enabled collected-by-server-side enabled }
+     provider:
+       server: "{{ f5app_services_package_server }}"
+       server_port: "{{ f5app_services_package_server_port }}"
+       user: "{{ f5app_services_package_user }}"
+       password: "{{ f5app_services_package_password }}"
+       validate_certs: "{{ f5app_services_package_validate_certs | default(no) }}"
+       transport: "{{ f5app_services_package_transport }}"
+
+  - name: Assign TCP and HTTP profiles to virtual servers using tmsh commands
+    bigip_command:
+     commands:
+      - modify ltm virtual {{item}} profiles add { telemetry-http-analytics { context all } }
+      - modify ltm virtual {{item}} profiles add { telemetry-tcp-analytics { context all } }
+     provider:
+       server: "{{ f5app_services_package_server }}"
+       server_port: "{{ f5app_services_package_server_port }}"
+       user: "{{ f5app_services_package_user }}"
+       password: "{{ f5app_services_package_password }}"
+       validate_certs: "{{ f5app_services_package_validate_certs | default(no) }}"
+       transport: "{{ f5app_services_package_transport }}"
+    with_items:
+     - "{{virtual_servers}}"
