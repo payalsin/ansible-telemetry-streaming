@@ -54,7 +54,7 @@
     vars:
       f5app_services_package_url: "{{item.uri}}/download/{{item.release_tag}}/{{item.release}}?raw=true"
       f5app_services_package_path: "/tmp/{{item.release}}"
-    with_items:
+    loop:
     - {uri: "{{as3_uri}}", release_tag: "{{as3_release_tag}}", release: "{{as3_release}}"}
     - {uri: "{{ts_uri}}", release_tag: "{{ts_release_tag}}", release: "{{ts_release}}"}
 
@@ -74,7 +74,7 @@
        password: "{{ f5app_services_package_password }}"
        validate_certs: "{{ f5app_services_package_validate_certs | default(no) }}"
        transport: "{{ f5app_services_package_transport }}"
-    with_items:
+    loop:
     - {service: "AS3", file: "as3_ts_setup_declaration.json"}
     - {service: "Telemetry", file: "ts_poller_and_listener_setup_declaration.json"}
 
@@ -90,6 +90,7 @@
        transport: "{{ f5app_services_package_transport }}"
      module: "avr"
      level: "nominal" 
+    when: avr_needed == 'yes'
   
   - name: Enable AVR logs using tmsh commands
     bigip_command:
@@ -104,7 +105,8 @@
        password: "{{ f5app_services_package_password }}"
        validate_certs: "{{ f5app_services_package_validate_certs | default(no) }}"
        transport: "{{ f5app_services_package_transport }}"
-
+     when: avr_needed == 'yes'
+     
   - name: Assign TCP and HTTP profiles to virtual servers using tmsh commands
     bigip_command:
      commands:
@@ -117,5 +119,6 @@
        password: "{{ f5app_services_package_password }}"
        validate_certs: "{{ f5app_services_package_validate_certs | default(no) }}"
        transport: "{{ f5app_services_package_transport }}"
-    with_items:
+    loop:
      - "{{virtual_servers}}"
+    when: avr_needed == 'yes'
