@@ -14,3 +14,6 @@ Download the following roles from ansible galaxy
 - Run the playbook
   - ansible-playbook ts_workflow.yml
   
+## Assumptions
+- BIG-IP 14.1+ version is being used
+- The TS delaration is for Azure log analytics (modify it to use your own consumer)
