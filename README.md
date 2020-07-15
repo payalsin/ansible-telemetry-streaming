@@ -10,7 +10,8 @@ Use the following ansible playbook to get started using telemetry streaming on B
 Download the following roles from ansible galaxy
 - ansible-galaxy install f5devcentral.f5app_services_package --force
 - ansible-galaxy install f5devcentral.atc_deploy --force
-- Change your vars.yml file
+- got clone this repo (git clone https://github.com/payalsin/ansible-telemetry-streaming.git)
+- Change your vars.yml file to reflect your environment
 - Run the playbook
   - ansible-playbook ts_workflow.yml
   
