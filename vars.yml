@@ -1,4 +1,4 @@
-f5app_services_package_server: "10.192.73.91"
+f5app_services_package_server: "10.192.xxx.xxx"
 f5app_services_package_server_port: "443"
 f5app_services_package_user: "admin"
 f5app_services_package_password: "admin"
@@ -8,4 +8,3 @@ f5app_services_package_transport: "rest"
 ts_uri: "https://github.com/F5Networks/f5-telemetry-streaming/releases"
 as3_uri: "https://github.com/F5Networks/f5-appsvcs-extension/releases"
 virtual_servers: ["test","test1"]
-
