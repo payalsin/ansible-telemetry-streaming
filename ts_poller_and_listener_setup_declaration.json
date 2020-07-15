@@ -11,9 +11,9 @@
     "My_Consumer": {
         "class": "Telemetry_Consumer",
         "type": "Azure_Log_Analytics",
-        "workspaceId": "099865e4-56ec-4ecb-8377-ccb28a228595",
+        "workspaceId": "<<workspace-id>>",
         "passphrase": {
-            "cipherText": "ZDwZ+cdhPPANiH+YX+mrBEHQIRr+5JIdSqUBzMKjXbKzXOVErRx9S3TJBREroYII0Ej0nJnVo7xsDNxjTmlUnQ=="
+            "cipherText": "<<sharedkey>>"
         },
         "useManagedIdentity": false,
         "region": "eastus"
