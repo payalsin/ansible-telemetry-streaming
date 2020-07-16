@@ -7,5 +7,9 @@ f5app_services_package_transport: "rest"
 
 ts_uri: "https://github.com/F5Networks/f5-telemetry-streaming/releases"
 as3_uri: "https://github.com/F5Networks/f5-appsvcs-extension/releases"
-virtual_servers: ["test","test1"]
+
+virtual_servers:
+- "test"
+- "test1"
+
 avr_needed: "yes" 
