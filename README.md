@@ -15,6 +15,7 @@ Download the following roles from ansible galaxy
   - If avr is required set the avr_needed paramter to "yes", if not needed change it to "no"
 - Run the playbook
   - ansible-playbook ts_workflow.yml
+- JSON files used
   - ts_poller_and_listener_setup_declaration.json is used for basic TS setup
   - as3_ts_setup_declaration.json file is used to declare TS logging profiles etc. using AS3
     - If more logging profile are needed - you can refer to file as3_ts_setup_declaration_adv.json
