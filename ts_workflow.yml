@@ -90,7 +90,7 @@
        transport: "{{ f5app_services_package_transport }}"
      module: "avr"
      level: "nominal" 
-    when: avr_needed == 'yes'
+    when: avr_needed == "yes"
   
   - name: Enable AVR logs using tmsh commands
     bigip_command:
@@ -105,20 +105,21 @@
        password: "{{ f5app_services_package_password }}"
        validate_certs: "{{ f5app_services_package_validate_certs | default(no) }}"
        transport: "{{ f5app_services_package_transport }}"
-     when: avr_needed == 'yes'
+     when: avr_needed == "yes"
      
-  - name: Assign TCP and HTTP profiles to virtual servers using tmsh commands
-    bigip_command:
-     commands:
-      - modify ltm virtual {{item}} profiles add { telemetry-http-analytics { context all } }
-      - modify ltm virtual {{item}} profiles add { telemetry-tcp-analytics { context all } }
-     provider:
+  - name: Assign TCP and HTTP profiles to virtual servers
+    bigip_virtual_server:
+      provider:
        server: "{{ f5app_services_package_server }}"
        server_port: "{{ f5app_services_package_server_port }}"
        user: "{{ f5app_services_package_user }}"
        password: "{{ f5app_services_package_password }}"
        validate_certs: "{{ f5app_services_package_validate_certs | default(no) }}"
        transport: "{{ f5app_services_package_transport }}"
-    loop:
-     - "{{virtual_servers}}"
-    when: avr_needed == 'yes'
+      name: "{{item}}"
+      profiles:
+      - http
+      - telemetry-http-analytics
+      - telemetry-tcp-analytics
+    loop: "{{virtual_servers}}"
+    when: avr_needed == "yes"
